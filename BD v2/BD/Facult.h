@@ -48,7 +48,7 @@ class facult
 				{
 					return count_of_kaf;
 				}
-			int get_unic_disciplines()
+			int &get_unic_disciplines()
 				{
 					return unic_disciplines;
 				}
@@ -65,3 +65,15 @@ class facult
 					return &disciplines;
 				}
 	};
+
+/* Этот класс - связующее звено между 
+отраслевыми и базовыми факультетами */
+class Facult : virtual public facult
+{
+public:
+	// Функция сортировки дисциплин по кафедрам
+	void sort()
+		{
+			std::cout << "Hello";
+		}
+};

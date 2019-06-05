@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Save_Info.h"
 #include "Get Info.h"
 #include "KOHCTPYKTOP.h"
@@ -19,7 +20,7 @@
 
 inline void shapka()
 	{
-		std::cout << "\t\t\tData Base"<<std::endl<<"Author: Dmitry Mitrofanov \t\t Group: IC8-23\n"<<"Bauman Moscow State University\n"<<"ver: 0.0.0\n";
+		std::cout << "\t\t\tData Base"<<std::endl<<"Author: Dmitry Mitrofanov \t\t Group: IC8-23\n"<<"Bauman Moscow State University\n"<<"ver: 0.1.0\n";
 	}
 
 inline void shapka2()
@@ -35,9 +36,9 @@ void Note1()
 
 namespace fs = std::experimental::filesystem;
 
-class console: KOHCTPYKTOP, print, Info
+class console: KOHCTPYKTOP, public print, Info
 	{
-		std::vector <facult> bufferzone;
+		std::multimap <std::string,Facult> bufferzone;
 		std::string command;
 		std::string destination;
 		int pos=0;
@@ -47,28 +48,56 @@ class console: KOHCTPYKTOP, print, Info
 		~console()
 			{
 				init();
-				branch_faculties.clear();
-				base_faculties.clear();
-				command.clear();
+				get_base_faculties()->clear();
+				get_branch_faculties()->clear();
 				destination.clear();
-				save_other(bufferzone, "Data/temp.txt");
+				if (!bufferzone.empty())
+					{
+						std::cout << "\nDo you want to save information [yes/no]?\n>> ";
+						std::cin >> command;
+						if (command == "yes")
+							{
+								if (!is_exist("temp.txt"))
+									{
+										save_other(bufferzone, "Data/temp.txt");
+										std::cout << "Saved into Data/temp.txt ";
+									}
+								else
+									{
+										pos = 0;
+										while (is_exist("temp" + std::to_string(pos) + ".txt"))
+											{
+												pos++;
+											}
+										save_other(bufferzone, "Data/temp" + std::to_string(pos) + ".txt");
+										std::cout << "Saved into  Data/temp" + std::to_string(pos) + ".txt";
+									}
+							}
+					}
+				bufferzone.clear();
+				command.clear();
 			}
-
 
 		void init()
 			{
-				bufferzone.resize(base_faculties.size() + branch_faculties.size());
-				std::copy(base_faculties.begin(), base_faculties.end(), bufferzone.begin());
-				std::copy(branch_faculties.begin(), branch_faculties.end(), bufferzone.begin()+base_faculties.size());
+				bufferzone.clear();
+				for (auto i = get_base_faculties()->begin(); i != get_base_faculties()->end(); i++)
+					{
+						bufferzone.insert(*i);
+					}
+				for (auto i = get_branch_faculties()->begin(); i != get_branch_faculties()->end(); i++)
+					{
+						bufferzone.insert(*i);
+					}
 			}
 			
 		void loop()
 			{		
 				shapka2();
-				while (true)
+				do
 					{
-						enter(); accord_comm();
-					}
+						enter();
+				} while (accord_comm());
 			}
 
 		void enter()
@@ -127,12 +156,12 @@ class console: KOHCTPYKTOP, print, Info
 						znak = _getch();
 					}
 			}
-
-		void accord_comm()
+		
+		bool accord_comm()
 			{
 				if (command == "help" || command == "commands")
 					{
-						std::cout << "\n\t\tCommands\n\n-create <facult/faculties> (to create facult or faculties)\n-all or show all\n-save\n-see (to see all)\n-search <what>\n-sort <type>\n-change\n-info\n-man <command> (to see more about command)";
+						std::cout << "\n\t\tCommands\n\n-create <facult/faculties> (to create facult or faculties)\n-all or show all\n-save\n-see (to see all)\n-search <what>\n-sort <type>\n-change\n-info\n-man <command> (to see more about command)\n-clear (to clear screen)\n-close (to exit)";
 					}
 				if (command == "create")
 					{
@@ -145,21 +174,35 @@ class console: KOHCTPYKTOP, print, Info
 								std::cout << "\nEnter count of faculties: ";
 								std::cin >> pos;
 								bufferzone = create_faculties(pos);
-							}
 
-						std::cout << "Want save it (1-yes,0-no)?";
-						pos = 0;
-						cin(pos);
-						if (pos == 1)
-							{
-								save_other(bufferzone, "Data/created.txt");/**/
+								std::cout << "Want save it (1-yes,0-no)?";
+								pos = 0;
+								cin(pos);
+								if (pos == 1)
+									{
+										if (!is_exist("created.txt"))
+											{
+												save_other(bufferzone, "Data/created.txt");
+												std::cout << "Saved into Data/created.txt ";
+											}
+										else
+											{
+												pos = 0;
+												while (is_exist("created" + std::to_string(pos) + ".txt"))
+													{
+														pos++;
+													}
+												save_other(bufferzone, "Data/created" + std::to_string(pos) + ".txt");
+												std::cout << "Saved into  Data/created" + std::to_string(pos) + ".txt";
+											}
+									}
 							}
 						sort();
 					}
 				if (command == "open")
 					{
 						get_info(destination);
-						print_all(base_faculties,branch_faculties);
+						print_all(*get_base_faculties(),*get_branch_faculties());
 					}
 				if (command == "all" || command+' '+ destination == "show all")
 					{
@@ -171,7 +214,19 @@ class console: KOHCTPYKTOP, print, Info
 						init();
 						if (destination.empty())
 							{
-								save_other(bufferzone, "Data/Faculties.txt");
+								if (!is_exist("Faculties.txt"))
+									{
+										saver();
+									}
+								else
+									{
+										pos = 0;
+										while (is_exist("Faculties"+std::to_string(pos)+".txt"))
+											{
+												pos++;
+											}
+										save_other(bufferzone, "Data/Faculties"+std::to_string(pos)+".txt");
+									}
 							}
 						else
 							{
@@ -179,194 +234,246 @@ class console: KOHCTPYKTOP, print, Info
 									{
 										save_other(bufferzone, "Data/" + destination);
 									}
-								else
-									{
-										
-									}
 							}
 					}
 				if (command == "search")
 					{
-						int pos=1; // Отвечает за правило выборки 1 - facult, 2 - discipline, 3 - HYK 
-						std::vector <facult> temp;
-						init();
-
-						Note1();
-						std::cout << "status: facult\n";
-						while (!GetAsyncKeyState(0x1B))
+						if (!destination.empty())
 							{
-								system("cls");
+								int pos = 1; // Отвечает за правило выборки 1 - facult, 2 - discipline, 3 - HYK 
+								std::multimap <std::string, Facult> temp;
+								init();
+
 								Note1();
-								if (GetAsyncKeyState(VK_UP))
+								std::string status = "facult";
+								while (!GetAsyncKeyState(0x1B))
 									{
-										temp.clear();
-										if (pos > 1)
-											{
-												pos --;
-												std::cout << std::endl;
-											}
+										system("cls");
+										Note1();
+										std::cout << "status: " + status+'\n';
 										if (pos == 1)
 											{
-												std::cout << "status: facult\n";
-											}
-										else if (pos == 2)
-											{
-												std::cout << "status: discipline\n";
-											}
-										else
-											{
-												std::cout << "status: HYK\n";
-											}
-									}
-								else if (GetAsyncKeyState(VK_DOWN))
-									{
-										temp.clear();
-										if (pos < 3)
-											{
-												pos++;
-												std::cout << std::endl;
-											}
-										if (pos == 1)
-											{
-												std::cout << "status: facult\n";
-											}
-										else if (pos == 2)
-											{
-												std::cout << "status: discipline\n";
-											}
-										else
-											{
-												std::cout << "status: HYK\n";
-											}
-									}
-								if (GetAsyncKeyState(0x20))
-									{
-										save_other(temp, "Data/search.txt");
-										std::cout << "Saved into Data/search.txt ";
-										Sleep(1000);
-									}
-								if (pos == 1)
-									{
-										for (int i = 0; i<int(bufferzone.size()); i++)
-											{
-												if (bufferzone.at(i).get_facult_name()==destination)
+												for (auto i = bufferzone.begin(); i != bufferzone.end(); i++)
 													{
-														print_just_facult(bufferzone.at(i));
-														temp.push_back(bufferzone.at(i));
-													}
-											}
-									}
-								else if(pos == 2)
-									{
-										for (int i = 0; i<int(bufferzone.size()); i++)
-											{
-												for (int j = 0; j<int(bufferzone.at(i).get_disciplines()->size()); j++)
-													{
-														if (bufferzone.at(i).get_disciplines()->at(j).get_name() == destination)
+														if (i->second.get_facult_name() == destination)
 															{
-																print_facult(bufferzone.at(i));
-																temp.push_back(bufferzone.at(i));
+																print_just_facult(i->second);
+																temp.insert(std::pair<std::string, Facult>(i->second.get_facult_name(), i->second));
 															}
 													}
 											}
-									}
-								else
-									{
-										for (int i = 0; i<int(bufferzone.size()); i++)
+										if (pos == 2)
 											{
-												if (bufferzone.at(i).get_HYK() == destination)
+												for (auto i = bufferzone.begin(); i != bufferzone.end(); i++)
 													{
-														print_facult(bufferzone.at(i));
-														temp.push_back(bufferzone.at(i));
+														for (auto j = i->second.get_disciplines()->begin(); j != i->second.get_disciplines()->end(); j++)
+															{
+																if (j->second.get_name() == destination)
+																	{
+																		print_just_facult(i->second);
+																		temp.insert(std::pair<std::string, Facult>(i->second.get_facult_name(), i->second));
+																	}
+															}
 													}
 											}
+										if (pos == 3)
+											{
+												for (auto i = bufferzone.begin(); i != bufferzone.end(); i++)
+													{
+														if (i->second.get_HYK() == destination)
+															{
+																print_just_facult(i->second);
+																temp.insert(std::pair<std::string, Facult>(i->second.get_facult_name(), i->second));
+															}
+													}
+											}
+										if (GetAsyncKeyState(VK_UP))
+											{
+												temp.clear();
+												if (pos > 1)
+													{
+														pos--;
+														std::cout << std::endl;
+													}
+												if (pos == 1)
+													{
+														status= "facult";
+													}
+												if (pos == 2)
+													{
+														status = "discipline";
+													}
+												if (pos == 3)
+													{
+														status = "HYK";
+													}
+											}
+										if (GetAsyncKeyState(VK_DOWN))
+											{
+												temp.clear();
+												if (pos < 3)
+													{
+														pos++;
+														std::cout << std::endl;
+													}
+												if (pos == 1)
+													{
+														status = "facult";
+													}
+												if (pos == 2)
+													{
+														status = "discipline";
+													}
+												if (pos == 3)
+													{
+														status = "HYK";
+													}
+											}
+										if (GetAsyncKeyState(0x20))
+											{
+												if (!temp.empty())
+													{
+														if (!is_exist("search.txt"))
+															{
+																save_other(temp, "Data/search.txt");
+																std::cout << "Saved into Data/search.txt\nTo update page use up and down.";
+															}
+														else
+															{
+																pos = 0;
+																while (is_exist("search" + std::to_string(pos) + ".txt"))
+																	{
+																		pos++;
+																	}
+																save_other(temp, "Data/search" + std::to_string(pos) + ".txt");
+																std::cout << "Saved into  Data/search" + std::to_string(pos) + ".txt\nTo update page use up and down.";
+															}
+													}
+												Sleep(1000);
+											}
+										std::cout << std::endl;
+										_getch();
 									}
-								_getch();_getch();
-							} 
+								system("cls");
+								shapka2();
+							}
+						else
+							{
+								std::cout << "\nNeed argument!\n";
+							}
 					}
 				if (command == "sort")
 					{
 						init();
+						std::multimap <std::string, Facult>* temp_map= new std::multimap <std::string, Facult>;
 						std::cout << "\nEnter type of sort (1-name of facult / 2- count of departments): ";
 						std::cin >> pos;
 						if (pos == 1)
 							{
-								for (int i = 0; i<double(bufferzone.size()) / 2; i++)
+								for (auto i = bufferzone.begin(); i != bufferzone.end(); i++)
 									{
-										for (int j = i; j<int(bufferzone.size()); j++)
-											{
-												if (bufferzone.at(i).get_facult_name() < bufferzone.at(j).get_facult_name())
-													{
-														std::swap(bufferzone.at(i), bufferzone.at(j));
-													}
-											}
+										temp_map->insert(std::pair <std::string, Facult>(i->second.get_facult_name(), i->second));
 									}
 							}
 						if (pos == 2)
 							{
-								for (int i = 0; i<double(bufferzone.size()) / 2; i++)
+								for (auto i = bufferzone.begin(); i != bufferzone.end(); i++)
 									{
-										for (int j = i; j<int(bufferzone.size()); j++)
+										if (i->second.get_count_of_kaf() < 10)
 											{
-												if (bufferzone.at(i).get_count_of_kaf() < bufferzone.at(j).get_count_of_kaf())
-													{
-														std::swap(bufferzone.at(i), bufferzone.at(j));
-													}
+												temp_map->insert(std::pair <std::string, Facult>("0"+std::to_string(i->second.get_count_of_kaf()), i->second));
+											}
+										else
+											{
+												temp_map->insert(std::pair <std::string, Facult>(std::to_string(i->second.get_count_of_kaf()), i->second));
 											}
 									}
 							}
+						bufferzone.clear(); bufferzone = *temp_map;
+						delete temp_map;
 						print_just_facult(bufferzone);
 
-						std::cout << "\nWant save it (1-yes,0-no)?";
+						std::cout << "\nWant save it (1-yes,0-no)? ";
 						pos = 0;
 						cin(pos);
 						if (pos == 1)
 							{
-								save_other(bufferzone, "Data/sorted.txt");
+								if (!is_exist("sorted.txt"))
+									{
+										save_other(bufferzone, "Data/sorted.txt");
+										std::cout << "Saved into Data/sorted.txt ";
+									}
+								else
+									{
+										pos = 0;
+										while (is_exist("sorted" + std::to_string(pos) + ".txt"))
+											{
+												pos++;
+											}
+										save_other(bufferzone, "Data/sorted" + std::to_string(pos) + ".txt");
+										std::cout << "Saved into  Data/sorted" + std::to_string(pos) + ".txt";
+									}
 							}
 						sort();
 					}
 				if (command == "change")
 					{
 						init();
+						pos = 0;
 						std::cout << "\n\n";
 						std::cout << std::left << "\n"<<std::setw(4)<<"№"<< std::setw(10) << "Faculty" << std::setw(50) << "HYK" << std::setw(24) << "Number of departments"<< "\n";
-						for (int i = 0; i<int(bufferzone.size()); i++)
+						for (auto i = bufferzone.begin(); i!= bufferzone.end(); i++)
 							{
-								std::cout <<std::setw(2)<< i + 1<<": ";
-								print_just_facult(bufferzone.at(i));
+								std::cout <<std::setw(2)<< pos + 1<<": ";
+								print_just_facult(i->second);
+								pos++;
 							}	
 						std::cout << "What facult you want to change: ";
 						std::cin >> pos;
 						pos--;
 						system("cls");
-						print_facult(bufferzone.at(pos));
+						auto tempit = bufferzone.begin();
+						for (int i = 0; i < pos; i++)
+							{
+								tempit++;
+							}
+						print_facult(tempit->second);
 						std::cout << "\nNote: to delete facult enter \"delete\"; to change disciplines enter  \"change\"\n>> ";
 						std::cin >> command;
 						if (command == "delete")
 							{
-								bufferzone.erase(bufferzone.begin()+pos);
-								base_faculties.clear(); branch_faculties.clear();
-								sort();
+								bufferzone.erase(tempit);
 								system("cls");
 								print_just_facult(bufferzone);
 							}
 						else if (command == "change")
 							{
 								system("cls");
-								print_discs(bufferzone.at(pos));
+								print_discs(tempit->second);
 								std::cout << "Note: To add new discipline enter \"add\"; to delete discipline enter \"delete\"";
 								std::cin >> command;
 								if (command == "add")
 									{
-										bufferzone.at(pos).get_disciplines()->push_back(create_discipline());
+										if (similar_facult(tempit->second.get_facult_name()) == 1)
+											{
+												tempit->second.get_disciplines()->insert(std::pair<std::string, discipline>(create_discipline().get_kafedra(), create_discipline()));
+											}
+										else if (similar_facult(tempit->second.get_facult_name()) == 2)
+											{
+												tempit->second.get_disciplines()->insert(std::pair<std::string, discipline>(create_discipline().get_organization(), create_discipline()));
+											}
 									}
 								else if (command == "delete")
 									{
 										std::cout << "Enter pos: ";
 										std::cin >> pos;
 										pos--;
-										bufferzone.at(pos).get_disciplines()->erase(bufferzone.at(pos).get_disciplines()->begin() + pos);
+										auto tempit2 = tempit->second.get_disciplines()->begin();
+										for (int i = 0; i < pos; i++)
+											{
+												tempit2++;
+											}
+										tempit->second.get_disciplines()->erase(tempit2);
 									}
 							}
 					}
@@ -387,7 +494,7 @@ class console: KOHCTPYKTOP, print, Info
 							}
 						if (destination == "save")
 							{
-								std::cout << "-save\t\tЭта команда нужна для сохранения информации о базовых и отраслевых факультетах.\n";
+								std::cout << "-save <  or <way>.txt >\t\tЭта команда нужна для сохранения информации о базовых и отраслевых факультетах.\n\t\t\t\tВ качестве аргумента принимет ничего или имя файла с .txt на конце.";
 							}
 						if (destination == "search")
 							{
@@ -412,22 +519,33 @@ class console: KOHCTPYKTOP, print, Info
 						init();
 						print_facults(bufferzone);
 					}
+				if (command == "close")
+					{	
+						return false;
+						std::cout << std::endl;
+					}
+				if (command == "clear")
+					{
+						system("cls");
+						shapka2();
 
+					}
+				return true;
 			}
 
 		void sort()
 			{
-				branch_faculties.clear();
-				base_faculties.clear();
-				for (int i = 0; i<int(bufferzone.size()); i++)
+				get_base_faculties()->clear();
+				get_branch_faculties()->clear();
+				for (auto i = bufferzone.begin(); i!=bufferzone.end(); i++)
 					{
-						if (bufferzone.at(i).get_facult_name() == "РКТ" || bufferzone.at(i).get_facult_name() == "АК" || bufferzone.at(i).get_facult_name() == "ПС" || bufferzone.at(i).get_facult_name() == "РТ" || bufferzone.at(i).get_facult_name() == "ОЭП")
+						if (similar_facult(i->second.get_facult_name()) == 1)
 							{
-								branch_faculties.push_back(bufferzone.at(i)); // Отраслевые факультеты
+								get_base_faculties()->insert(*i); // Базовые факультеты
 							}
-						else
+						else if(similar_facult(i->second.get_facult_name()) == 2)
 							{
-								base_faculties.push_back(bufferzone.at(i)); // Базовые факультеты
+								get_branch_faculties()->insert(*i); // Отраслевые факультеты
 							}
 					}
 			}

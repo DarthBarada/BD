@@ -64,7 +64,7 @@ bool is_exist(std::string way)
 			}
 		catch (std::exception &exp)
 			{
-				std::cout << exp.what();
+			//	std::cout << exp.what();
 				return false;
 			}
 		return true;

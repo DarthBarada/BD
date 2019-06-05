@@ -4,21 +4,17 @@
 #include <Windows.h>
 //#include 
 
-#include "Base_Faculties.h"
-#include "Branch_Faculties.h"
-
-#include "Facult.h"
-#include "Discipline.h"
-
 #include "Exeption.h"
 #include "Save_Info.h"
+
+#include "Accordance.h"
 
 class KOHCTPYKTOP:virtual public discipline, virtual public save
 	{
 	public:
 		void create_facult();
 		discipline create_discipline();
-		std::vector <facult> create_faculties(int kol);
+		std::multimap <std::string, Facult> create_faculties(int kol);
 	};
 
 discipline KOHCTPYKTOP::create_discipline()
@@ -44,7 +40,7 @@ discipline KOHCTPYKTOP::create_discipline()
 
 void KOHCTPYKTOP::create_facult()
 	{
-		facult* temp = new facult;
+		Facult* temp = new Facult;
 		std::string buffer;
 		int kol;
 
@@ -64,18 +60,16 @@ void KOHCTPYKTOP::create_facult()
 
 		for (int i = 0; i < kol; i++)
 			{
-				temp->get_disciplines()->push_back(create_discipline());
+				temp->get_disciplines()->insert(std::pair<std::string,discipline>(create_discipline().get_name(),create_discipline()));
 			}
-
-		if (temp->get_facult_name() == "РКТ" || temp->get_facult_name() == "АК" || temp->get_facult_name() == "ПС" || temp->get_facult_name() == "РТ" || temp->get_facult_name() == "ОЭП")
+		if (similar_facult(temp->get_facult_name()) == 1)
 			{
-				branch_faculties.push_back(*temp); // Отраслевые факультеты
+				get_base_faculties()->insert(std::pair<std::string, Facult>(temp->get_facult_name(), *temp));
 			}
-		else
+		else if (similar_facult(temp->get_facult_name()) == 2)
 			{
-				base_faculties.push_back(*temp); // Базовые факультеты
+				get_branch_faculties()->insert(std::pair<std::string, Facult>(temp->get_facult_name(), *temp));
 			}
-
 		std::cout << "Want to save this facult (1 - yes; 0 - no)? ";
 		do
 			{
@@ -89,10 +83,10 @@ void KOHCTPYKTOP::create_facult()
 		delete temp;
 	}	
 
-std::vector <facult> KOHCTPYKTOP::create_faculties(int kol)
+std::multimap <std::string, Facult> KOHCTPYKTOP::create_faculties(int kol)
 	{
-		std::vector<facult>* temp = new std::vector<facult>;
-		temp->resize(kol);
+		std::multimap<std::string, Facult>* temp_map = new std::multimap<std::string, Facult>;
+		Facult *temp = new Facult;
 		for (int i = 0; i < kol; i++)
 			{
 				std::string buffer;
@@ -100,23 +94,23 @@ std::vector <facult> KOHCTPYKTOP::create_faculties(int kol)
 
 				std::cout << "\nEnter name of facult: ";
 				std::cin >> buffer;
-				temp->at(i).get_facult_name() = buffer;			buffer.clear();
+				temp->get_facult_name() = buffer;			buffer.clear();
 
 				std::cout << "\nEnter HYK: ";
 				std::cin >> buffer;
-				temp->at(i).get_HYK() = buffer;	buffer.clear();
+				temp->get_HYK() = buffer;	buffer.clear();
 
 				std::cout << "\nEnter count of kaf: ";
-				cin(temp->at(i).get_count_of_kaf());
+				cin(temp->get_count_of_kaf());
 
 				std::cout << "\nEnter count of disciplines that you enter: ";
 				cin(kol);
 
 				for (int i = 0; i < kol; i++)
 					{
-						temp->at(i).get_disciplines()->push_back(create_discipline());
+						temp->get_disciplines()->insert(std::pair<std::string, discipline>(create_discipline().get_name(), create_discipline()));
 					}
 			}
-		return *temp;
-		delete temp;
+		return *temp_map;
+		delete temp;delete temp_map;
 	}

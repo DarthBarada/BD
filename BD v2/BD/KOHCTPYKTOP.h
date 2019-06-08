@@ -1,20 +1,25 @@
 #pragma once
 // KOHCTPYKTOP
+
+/* Позволяет создавать элементв БД */
 #include <iostream>
 #include <Windows.h>
-//#include 
 
 #include "Exeption.h"
 #include "Save_Info.h"
+#include "Manager.h"
 
-#include "Accordance.h"
+#include <conio.h>
 
-class KOHCTPYKTOP:virtual public discipline, virtual public save
+class KOHCTPYKTOP:public manager, public save
 	{
-	public:
-		void create_facult();
-		discipline create_discipline();
-		std::multimap <std::string, Facult> create_faculties(int kol);
+		public:
+			// Создаёт один факультет 
+			void create_facult();
+			// Создаёт дисциплину
+			discipline create_discipline();
+			// Создаёт БД
+			void create_faculties(int kol);
 	};
 
 discipline KOHCTPYKTOP::create_discipline()
@@ -34,83 +39,81 @@ discipline KOHCTPYKTOP::create_discipline()
 
 		temp->accord();
 		return *temp;
-
 		delete temp;
 	}
 
 void KOHCTPYKTOP::create_facult()
 	{
-		Facult* temp = new Facult;
+		facult* temp=nullptr;
 		std::string buffer;
+		bool is_base_facult=false;
 		int kol;
 
 		std::cout << "\nEnter name of facult: ";
-		std::cin >> buffer;
-		temp->get_facult_name() = buffer;			buffer.clear();
+		do
+			{
+				std::cin >> buffer;
+				if (similar_facult(buffer) == 0)
+					{
+						std::cout << "Unknown facult!\n";
+						std::cout << "List of available facults: ";
+						std::for_each(base_facults_name.begin(), base_facults_name.end(), [](std::string temp) 
+							{	
+								std::cout << temp + ", ";
+							});
+						std::for_each(branch_facults_name.begin(), branch_facults_name.end(), [](std::string temp)
+							{
+								std::cout << temp + ", ";
+							});
+					}
+			} while (similar_facult(buffer) == 0);
+
+		if (similar_facult(buffer) == 1)
+			{
+				is_base_facult = true;
+				temp = &temp_base_facult;
+			}
+		else
+			{
+				temp = &temp_branch_facult;
+			}
+		temp->get_facult_name() = buffer;
 
 		std::cout << "\nEnter HYK: ";
 		std::cin >> buffer;
-		temp->get_HYK() = buffer;	buffer.clear();
+		temp->get_HYK() = buffer;
 
 		std::cout << "\nEnter count of kaf: ";
 		cin(temp->get_count_of_kaf());
+		temp->UnicDiscipline();
 
 		std::cout << "\nEnter count of disciplines that you enter: ";
 		cin(kol);
 
 		for (int i = 0; i < kol; i++)
 			{
-				temp->get_disciplines()->insert(std::pair<std::string,discipline>(create_discipline().get_name(),create_discipline()));
+				temp->get_disciplines().insert(std::pair<std::string,discipline>(create_discipline().get_name(),create_discipline()));
 			}
-		if (similar_facult(temp->get_facult_name()) == 1)
+
+		bufferzone.insert(std::pair<std::string, facult*>(temp->get_facult_name(), temp));
+
+		if (is_base_facult == true)
 			{
-				get_base_faculties()->insert(std::pair<std::string, Facult>(temp->get_facult_name(), *temp));
+				created_base_faculties.insert(std::pair<std::string, base_facult>(temp_base_facult.get_facult_name(), temp_base_facult));
 			}
-		else if (similar_facult(temp->get_facult_name()) == 2)
+		else
 			{
-				get_branch_faculties()->insert(std::pair<std::string, Facult>(temp->get_facult_name(), *temp));
+				created_branch_faculties.insert(std::pair<std::string, branch_facult>(temp_branch_facult.get_facult_name(), temp_branch_facult));
 			}
-		std::cout << "Want to save this facult (1 - yes; 0 - no)? ";
-		do
-			{
-				cin(kol);
-			} while (kol != 0 && kol != 1);
-		if (kol = 1)
-			{
-				save_facult(temp,"Data/facult.txt");
-			}
-		kol = 0;
 		delete temp;
 	}	
 
-std::multimap <std::string, Facult> KOHCTPYKTOP::create_faculties(int kol)
+void KOHCTPYKTOP::create_faculties(int kol)
 	{
-		std::multimap<std::string, Facult>* temp_map = new std::multimap<std::string, Facult>;
-		Facult *temp = new Facult;
+		bufferzone.clear();
 		for (int i = 0; i < kol; i++)
 			{
-				std::string buffer;
-				int kol;
-
-				std::cout << "\nEnter name of facult: ";
-				std::cin >> buffer;
-				temp->get_facult_name() = buffer;			buffer.clear();
-
-				std::cout << "\nEnter HYK: ";
-				std::cin >> buffer;
-				temp->get_HYK() = buffer;	buffer.clear();
-
-				std::cout << "\nEnter count of kaf: ";
-				cin(temp->get_count_of_kaf());
-
-				std::cout << "\nEnter count of disciplines that you enter: ";
-				cin(kol);
-
-				for (int i = 0; i < kol; i++)
-					{
-						temp->get_disciplines()->insert(std::pair<std::string, discipline>(create_discipline().get_name(), create_discipline()));
-					}
+				create_facult();
 			}
-		return *temp_map;
-		delete temp;delete temp_map;
+		transform();
 	}

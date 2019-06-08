@@ -4,15 +4,14 @@
 #include <string>
 #include <map>
 #include <algorithm>
-#include <set>
 #include <string>
 
 class facult
 	{
-		std::string name; // Название факультета
-		std::string HYK; // Название НУК
-		int count_of_kaf; // количество кафедр
-		std::multimap <std::string,discipline> disciplines; // Дисциплины факультета, ключ - название кафедры или организации 
+		std::string name;									   // Название факультета
+		std::string HYK;									  // Название НУК
+		int count_of_kaf;									 // количество кафедр
+		std::multimap <std::string,discipline> disciplines; // Дисциплины факультета, ключ - название кафедры
 		int unic_disciplines;
 
 		public:
@@ -32,15 +31,7 @@ class facult
 					disciplines.clear();
 				}
 			
-			void UnicDiscipline()
-				{
-					std::for_each(disciplines.begin(), disciplines.end(), [](std::pair <std::string, discipline> temp)
-						{
-							temp.first = temp.second.get_name();
-						});
-					unic_disciplines = disciplines.size();
-				}
-			virtual void sort() = 0;
+			virtual void UnicDiscipline() = 0;
 
 ///-------------------------------------------
 
@@ -48,7 +39,7 @@ class facult
 				{
 					return count_of_kaf;
 				}
-			int &get_unic_disciplines()
+			int& get_unic_disciplines()
 				{
 					return unic_disciplines;
 				}
@@ -60,20 +51,8 @@ class facult
 				{
 					return HYK;
 				}
-			std::multimap <std::string, discipline>* get_disciplines()
+			std::multimap <std::string, discipline>& get_disciplines()
 				{
-					return &disciplines;
+					return disciplines;
 				}
 	};
-
-/* Этот класс - связующее звено между 
-отраслевыми и базовыми факультетами */
-class Facult : virtual public facult
-{
-public:
-	// Функция сортировки дисциплин по кафедрам
-	void sort()
-		{
-			std::cout << "Hello";
-		}
-};

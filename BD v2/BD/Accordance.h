@@ -1,5 +1,9 @@
 #pragma once
 #include <string>
+#include <set>
+
+std::set <std::string> base_facults_name = { "ФН","РЛ", "РК", "ИБМ", "ИУ", "СМ", "МТ", "Э", "Л", "БМТ", "СГН", "ГУИМЦ", "ФМОП", "ФОФ", "ЮР", "ВИ" };
+std::set <std::string> branch_facults_name = { "РКТ","АК", "ПС", "РТ", "ОЭП"};
 
 // Функция оределяет кафедру по назвинию дисциплины 
 	std::string similar_disc_kaf(std::string Discipline)
@@ -54,18 +58,19 @@
 					return "NOT STATED";
 				}
 		}
+	
 	/* Если имя факультета относится:
 	1) к базовым факультетам, то возвращает 1,
 	2) к  отраслевым факультетам, то 2
 	3) иначе 0*/
 	int similar_facult(std::string name)
 		{
-			if (name == "РКТ" || name == "АК" || name == "ПС" || name == "РТ" || name == "ОЭП")
+			if (branch_facults_name.count(name)>0)
 				{
 	// Если факультет - отраслевой возвращаем 2
 					return 2; 
 				}
-			else
+			else if (base_facults_name.count(name) > 0)
 				{
 	// Если факультет - базовый возвращаем 1
 					return 1;

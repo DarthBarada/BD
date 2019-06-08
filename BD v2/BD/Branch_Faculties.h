@@ -1,44 +1,50 @@
 #pragma once
 #include "Facult.h"
-#include <unordered_map>
-#include <algorithm>
 
-class branch_facult: virtual public Facult
+#include <map>
+#include <set>
+
+class branch_facult: public facult
 	{
-		std::multimap <std::string, Facult> branch_faculties;
+		std::multimap <std::string, discipline> disciplines_sorted_by_org; // Дисциплины факультета, ключ - название кафедры или организации 
 	public:
 // Функция сортировки дисциплин по организациям
 		void sort()
 			{
 	/*	Так как multimap - коллекция пар ключ-значение, отсортированная по ключам,то 
 		   изменяем все значения ключей на организации соответствующего контейнера      */
-				std::multimap <std::string, Facult>* faculties = new std::multimap <std::string, Facult>;
-				Facult* temp_Facult = new Facult;
-				for (auto i = branch_faculties.begin(); i != branch_faculties.end(); i++)
+				for (auto i = get_disciplines().begin(); i != get_disciplines().end(); i++)
 					{
-						temp_Facult->get_facult_name() = i->second.get_facult_name();
-						temp_Facult->get_HYK() = i->second.get_HYK();
-						temp_Facult->get_count_of_kaf() = i->second.get_count_of_kaf();
-						temp_Facult->get_unic_disciplines() = i->second.get_unic_disciplines();
-
-						if (!i->second.get_disciplines()->empty())
-							{
-								for (auto j = i->second.get_disciplines()->begin(); j != i->second.get_disciplines()->end(); j++)
-									{
-										temp_Facult->get_disciplines()->insert(std::pair<std::string, discipline>(j->second.get_organization(), j->second));
-									}
-							}
-						faculties->insert(std::pair <std::string, Facult>(temp_Facult->get_facult_name(), *temp_Facult));
-						temp_Facult->get_disciplines()->clear();
+						disciplines_sorted_by_org.insert(std::pair<std::string, discipline>(i->second.get_kafedra(),i->second));
 					}
-				branch_faculties.clear(); branch_faculties = *faculties;
-				delete temp_Facult;
-				delete faculties;
 			}
 
-
-		std::multimap <std::string, Facult>* get_branch_faculties()
+		void UnicDiscipline()
 			{
-				return &branch_faculties;
+				std::set<std::string>* temp = new std::set<std::string>;
+				for (auto i = get_disciplines().begin(); i != get_disciplines().end(); i++)
+					{
+						temp->insert(i->second.get_name());
+					}
+				for (auto i = disciplines_sorted_by_org.begin(); i != disciplines_sorted_by_org.end(); i++)
+					{
+						temp->insert(i->second.get_name());
+					}
+				get_unic_disciplines()=int(temp->size());
+				delete temp;
+			}
+
+		void operator=(facult* temp)
+			{
+				get_facult_name() = temp->get_facult_name();
+				get_HYK() = temp->get_HYK();
+				get_count_of_kaf()=temp->get_count_of_kaf();
+				get_disciplines() = temp->get_disciplines();
+				UnicDiscipline();
+			}
+
+		std::multimap <std::string, discipline>* get_disciplines_sorted_by_kaf()
+			{
+				return &disciplines_sorted_by_org;
 			}
 	};

@@ -2,28 +2,25 @@
 #include <filesystem>
 #include <fstream>
 
-#include "Branch_Faculties.h"
-#include "Base_Faculties.h"
+#include "Manager.h"
 #include "Exeption.h"
 #include "Accordance.h"
 /*
 	Это специальный класс, чтобы получать информацию из файла, обрабатывать её и отправлять её, соответственно по факуьлтетам.
 */
-class Info:virtual public base_facult, virtual public branch_facult
+
+class Info:public manager
 	{
-	// Приходится переопределять сортировку из-за конфликтов
-		void sort() = 0;
-		// foo for sort faculties 
+		bool is_base_facult=false;
 		public:
 		// foo for get info from file
-		void get_info(std::string destination);
+		bool get_info(std::string destination);
 	};
 
-void Info:: get_info(std::string destination)
+bool Info:: get_info(std::string destination)
 	{
-		std::string line;								// строка - буффер
-		Facult *temp = new Facult;			
-
+		std::string line;				// строка - буффер			
+		facult* temp=nullptr;
 		if (is_exist(destination))
 			{
 				std::ifstream in("Data/" + destination);
@@ -35,9 +32,23 @@ void Info:: get_info(std::string destination)
 
 						while (std::getline(in, line))
 							{
+								if (line[0] == '1')							  //	Если в начале строки идет 1, то это базовый факультет,
+									{										 //		пусть temp указывает на базовый факльтет из maneger-а,
+										is_base_facult = true;
+										temp = &temp_base_facult;			//		следовательно мы можем сразу работать с факультетом, используя его методы
+									}									
+								else if (line[0] == '0')
+									{
+										is_base_facult = false;
+										temp = &temp_branch_facult;
+									}
+								else
+									{
+										std::cout << "\nERROR: File haven't specific char!";
+										return false;
+									}
 								//std::cout << line << std::endl;				// Выводим полученную сторку
-								
-								for (int i = 0; i<int(line.size()); i++)		// Парсим строку
+								for (int i = 1; i<int(line.size()); i++)		// Парсим строку
 									{
 										if (line[i] != '#')
 											{
@@ -51,17 +62,17 @@ void Info:: get_info(std::string destination)
 													{
 														case 0:
 															{
-																temp->get_facult_name() = buffer;
+																temp->get_facult_name()= buffer;
 																break;
 															}
 														case 1:
 															{
-																temp->get_HYK() = buffer;
+																temp->get_HYK()= buffer;
 																break;
 															}
 														case 2:
 															{
-																temp->get_count_of_kaf() = stoi(buffer);
+																temp->get_count_of_kaf()=stoi(buffer);
 																break;
 															}
 														default:
@@ -74,7 +85,7 @@ void Info:: get_info(std::string destination)
 																	{
 																		new_disc.get_count_of_teachers() = stoi(buffer);
 																		new_disc.accord();										// Находим соответствующую дисциплине кафедру и организацию
-																		temp->get_disciplines()->insert(std::pair <std::string, discipline>(new_disc.get_name(), new_disc));		// Добаляем дисциплину в вектор дисциплин
+																		temp->get_disciplines().insert(std::pair <std::string, discipline>(new_disc.get_name(), new_disc));		// Добаляем дисциплину в вектор дисциплин
 																		new_disc.get_name().clear();							// Чистим имя, чтобы можно не получить ошибку
 																	}
 															}
@@ -84,24 +95,22 @@ void Info:: get_info(std::string destination)
 												buffer.clear();
 											}
 									}
-								temp->UnicDiscipline();
-								temp->get_unic_disciplines();
-								
-								if (similar_facult(temp->get_facult_name())==1)
+								if(is_base_facult==true)
 									{
-										get_base_faculties()->insert(std::pair<std::string, Facult>(temp->get_facult_name(),*temp));
+										temp_base_facult.UnicDiscipline();
+										base_faculties.insert(std::pair<std::string, base_facult>(temp->get_facult_name(), temp_base_facult));
 									}
-								else if(similar_facult(temp->get_facult_name()) == 2)
+								else
 									{
-										get_branch_faculties()->insert(std::pair<std::string, Facult>(temp->get_facult_name(), *temp));
+										temp_branch_facult.sort();
+										temp_branch_facult.UnicDiscipline();
+										branch_faculties.insert(std::pair<std::string, branch_facult>(temp->get_facult_name(),temp_branch_facult));
 									}
 								counter = 0;
-								temp->get_disciplines()->clear();
+								temp->get_disciplines().clear();
 							}
 					}
 				in.close();
 			}
-		base_facult::sort();			// Сортируем факультеты
-		branch_facult::sort();
-		delete temp;						// Чистим память
+		return true;
 	}

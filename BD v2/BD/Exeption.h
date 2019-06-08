@@ -6,18 +6,20 @@
 
 class wrong_enter:public std::exception
 	{
-		virtual const char* what() const noexcept
-			{
-				return "\nWrong enter!\n";
-			}
+		public:
+			virtual const char* what() const noexcept
+				{
+					return "\nWrong enter!\n";
+				}
 	};
 
 class file_not_exists :public std::exception
 	{
-		virtual const char* what() const noexcept
-			{
-				return "\nFile don't exist!\n";
-			}
+		public:
+			virtual const char* what() const noexcept
+				{
+					return "\nFile don't exist!\n";
+				}
 	};
 
 class txt_exist :public std::exception
@@ -26,6 +28,15 @@ class txt_exist :public std::exception
 			virtual const char* what() const noexcept
 				{
 					return "\nIt's not txt file!\n";
+				}
+	};
+
+class data_exist :public std::exception
+	{
+		public:
+			virtual const char* what() const noexcept
+				{
+					return "\nHasn't data!\n";
 				}
 	};
 
@@ -62,9 +73,8 @@ bool is_exist(std::string way)
 						throw a;
 					}
 			}
-		catch (std::exception &exp)
+		catch (...)
 			{
-			//	std::cout << exp.what();
 				return false;
 			}
 		return true;
@@ -93,9 +103,38 @@ bool is_txt(std::string destination)
 						throw b;
 					}
 			}
-		catch (std::exception &exp)
+		catch (...)
 			{
-				std::cout << exp.what();
+				return false;
+			}
+		return true;
+	}
+
+bool have_data(std::string destination)
+	{
+		std::string txt;
+		try
+			{
+				if (destination.size() >= 5)
+					{
+						for (int i =0; i<5; i++)
+							{
+								txt += destination.at(i);
+							}
+						if (txt != "Data/")
+							{
+								data_exist a;
+								throw a;
+							}
+					}
+				else
+					{
+						data_exist b;
+						throw b;
+					}
+			}
+		catch (...)
+			{
 				return false;
 			}
 		return true;
